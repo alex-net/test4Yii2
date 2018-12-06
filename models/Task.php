@@ -70,7 +70,6 @@ class Task extends \yii\db\ActiveRecord
 
 		if ($issave){
 			$this->uid=\Yii::$app->user->id;
-			\Yii::info($this->attributes,'ssd');
 			$this->save();
 		}
 		else

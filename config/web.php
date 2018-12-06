@@ -56,6 +56,14 @@ $config = [
                 'admin/user/<id:\d+>'=>'admin/user-edit',
                 'admin/statuses/<id:\d+>'=>'admin/status-edit',
                 'admin/tasks/<id:\d+>'=>'admin/task-edit',
+                 [
+                    'class' => 'yii\rest\UrlRule', 
+                    'controller' => 'task',
+                    'only'=>['index','view','status-change'],
+                    'extraPatterns'=>[
+                        'PUT <id>/status'=>'status-change',
+                    ],
+                ]
             ],
         ],
         
