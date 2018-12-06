@@ -7,11 +7,15 @@ $config = [
     'id' => 'basic',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'language'=>'ru-RU',
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
     ],
     'components' => [
+        'formatter'=>[
+            'class'=>'app\components\AppFormatter',
+        ],
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'S2FdJkdxxQuhNnyQDPs9BGbhm8i9cFsB',
@@ -43,14 +47,15 @@ $config = [
             ],
         ],
         'db' => $db,
-        /*
+        
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                'admin/user/<id:\d+>'=>'admin/user-edit',
             ],
         ],
-        */
+        
     ],
     'params' => $params,
 ];

@@ -2,38 +2,34 @@
 
 namespace app\models;
 
-class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
+use Yii;
+use \yii\base\Security;
+
+/**
+ * класс пользователя .. 
+ */
+class User extends \yii\db\ActiveRecord implements \yii\web\IdentityInterface
 {
-    public $id;
-    public $username;
-    public $password;
-    public $authKey;
-    public $accessToken;
+    /**
+     * @constant(SELF_EDIT)   сценарий редактирования своей учёти .. 
+     */
+    const SELF_EDIT='selfedit';
+    const OTHER_EDIT='oheredit';
+    const NEW_EDIT='newedit';
 
-    private static $users = [
-        '100' => [
-            'id' => '100',
-            'username' => 'admin',
-            'password' => 'admin',
-            'authKey' => 'test100key',
-            'accessToken' => '100-token',
-        ],
-        '101' => [
-            'id' => '101',
-            'username' => 'demo',
-            'password' => 'demo',
-            'authKey' => 'test101key',
-            'accessToken' => '101-token',
-        ],
-    ];
 
+    public static function tableName()
+    {
+        return 'users';
+    }
 
     /**
      * {@inheritdoc}
      */
     public static function findIdentity($id)
     {
-        return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+        return static::findOne($id);
+        //return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
     }
 
     /**
@@ -41,12 +37,6 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findIdentityByAccessToken($token, $type = null)
     {
-        foreach (self::$users as $user) {
-            if ($user['accessToken'] === $token) {
-                return new static($user);
-            }
-        }
-
         return null;
     }
 
@@ -58,13 +48,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public static function findByUsername($username)
     {
-        foreach (self::$users as $user) {
-            if (strcasecmp($user['username'], $username) === 0) {
-                return new static($user);
-            }
-        }
-
-        return null;
+        return static::findOne(['username'=>$username]);
     }
 
     /**
@@ -80,7 +64,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function getAuthKey()
     {
-        return $this->authKey;
+        return $this->auth_key;
     }
 
     /**
@@ -88,7 +72,7 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validateAuthKey($authKey)
     {
-        return $this->authKey === $authKey;
+        return $this->auth_key === $authKey;
     }
 
     /**
@@ -99,6 +83,90 @@ class User extends \yii\base\BaseObject implements \yii\web\IdentityInterface
      */
     public function validatePassword($password)
     {
-        return $this->password === $password;
+        return Yii::$app->security->validatePassword($password,$this->password);
+    }
+
+    /**
+     * перед сохранением ... 
+     */
+    public function beforeSave($ins)
+    {
+        if (!parent::beforeSave($ins))
+            return false;
+        if ($this->isNewRecord)
+            $this->auth_key=Yii::$app->security->generateRandomString();
+        return true;
+    }
+
+    public function rules()
+    {
+        return [
+            ['id','integer','min'=>1,'on'=>[static::SELF_EDIT,static::OTHER_EDIT]],
+            ['id','integer','min'=>0,'max'=>0,'on'=>static::NEW_EDIT],
+            ['username','required'],
+            ['username','uniqueusername'],
+            ['password','required','on'=>static::NEW_EDIT],
+            ['password','safe','on'=>[static::SELF_EDIT,static::OTHER_EDIT]],
+            ['status','boolean'],
+        ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'username'=>'Имя пользователя',
+            'password'=>'Пароль',
+            'status'=>'Активен',
+        ];
+    }
+
+    public function attributeHints()
+    {
+        $h=[];
+        if (in_array($this->scenario,[static::SELF_EDIT,static::OTHER_EDIT]))
+            return ['password'=>'Оставить пустым если пароль не надо изменить'];
+    }
+
+    /**
+     * Валиация уникального имени юзера ..
+     * @param string $attr имя валидируемого параметра
+     * @param array $param параметры валидации
+     */
+    public function uniqueusername($attr,$param)
+    {
+        Yii::info([$attr,$this->id],'valid');
+        if (static::find()->where(['and',['=',$attr,$this->$attr],['!=','id',intval($this->id)]])->exists())
+            $this->addError($attr,'Имя пользователя уже занято.');
+    }
+
+    /**
+     * сохранение давнных из формы ..
+     * @param array $post POST данные 
+     * @param boolean $issave true в случае сохранения .. в противном случае = удаление ..
+     */
+    public function saveData($post,$issave=true)
+    {
+        if (!$this->load($post))
+            return false;
+        
+        if ($issave && !$this->validate() || !$issave && !$this->validate('id'))
+            return false;
+        if ($issave){
+            $this->password=$this->password?Yii::$app->security->generatePasswordHash($this->password):$this->oldAttributes['password'];
+            $this->save();    
+        }
+        else
+            $this->delete();
+        
+        return true;
+    }
+
+    /**
+     * Вернуть список пользователей для отображения 
+     * @return \yii\db\ActiveQuery Запрос выборки юзера 
+     */
+    public static function userList()
+    {
+        return static::find()->where(['!=','id',1]);
     }
 }

@@ -38,21 +38,18 @@ AppAsset::register($this);
     echo Nav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
         'items' => [
-            ['label' => 'Home', 'url' => ['/site/index']],
-            ['label' => 'About', 'url' => ['/site/about']],
-            ['label' => 'Contact', 'url' => ['/site/contact']],
-            Yii::$app->user->isGuest ? (
-                ['label' => 'Login', 'url' => ['/site/login']]
-            ) : (
-                '<li>'
-                . Html::beginForm(['/site/logout'], 'post')
-                . Html::submitButton(
-                    'Logout (' . Yii::$app->user->identity->username . ')',
-                    ['class' => 'btn btn-link logout']
-                )
-                . Html::endForm()
-                . '</li>'
-            )
+            ['label'=>'Задачи','url'=>['admin/tasks'],'visible'=>!Yii::$app->user->isGuest],
+            ['label'=>'Статусы','url'=>['admin/statuses'],'visible'=>!Yii::$app->user->isGuest],
+            ['label'=>'Пользователи','url'=>['admin/users'],'visible'=>Yii::$app->user->id==1],
+            ['label'=>'Вход','url'=>['admin/enter'],'visible'=>Yii::$app->user->isGuest],
+            ['label'=>'Кабинет','url'=>['admin'],'visible'=>!Yii::$app->user->isGuest,'items'=>[
+                ['label'=>'Кабинет','url'=>['admin/index'],'visible'=>!Yii::$app->user->isGuest],
+                ['label'=>'Выход','url'=>['admin/logout'],'visible'=>!Yii::$app->user->isGuest],
+            ]],
+            
+
+
+            
         ],
     ]);
     NavBar::end();
