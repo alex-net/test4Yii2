@@ -15,6 +15,7 @@ $config = [
     'components' => [
         'formatter'=>[
             'class'=>'app\components\AppFormatter',
+            'datetimeFormat'=>'php:Y-m-d H:i:s',
         ],
         'request' => [
             // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
@@ -53,6 +54,8 @@ $config = [
             'showScriptName' => false,
             'rules' => [
                 'admin/user/<id:\d+>'=>'admin/user-edit',
+                'admin/statuses/<id:\d+>'=>'admin/status-edit',
+                'admin/tasks/<id:\d+>'=>'admin/task-edit',
             ],
         ],
         
